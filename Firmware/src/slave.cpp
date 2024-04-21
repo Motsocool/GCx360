@@ -27,12 +27,8 @@ void i2c_get_data(int len)
     {
         usbd_c[0].type = (xid_type_t)(packet_id & 0x0F);
 
-        uint8_t *rxbuf = (usbd_c[0].type == DUKE) ? ((uint8_t*)&usbd_c[0].duke.in) :
-                         (usbd_c[0].type == STEELBATTALION) ? ((uint8_t*)&usbd_c[0].sb.in) :
-                         NULL;
-        uint8_t  rxlen = (usbd_c[0].type == DUKE) ? sizeof(usbd_c[0].duke.in) :
-                         (usbd_c[0].type == STEELBATTALION) ? sizeof(usbd_c[0].sb.in) :
-                         0;
+        uint8_t *rxbuf = (usbd_c[0].type == GAMECUBE) ? ((uint8_t*)&usbd_c[0].gamecube.in) : NULL;
+        uint8_t  rxlen = (usbd_c[0].type == GAMECUBE) ? sizeof(usbd_c[0].gamecube.in) : 0;
 
         if (len != rxlen + 1 /* because of status byte */ || rxbuf == NULL || rxlen == 0)
         {
@@ -54,13 +50,9 @@ flush_and_leave:
 
 void i2c_send_data(void)
 {
-    if (usbd_c[0].type == DUKE)
+    if (usbd_c[0].type == GAMECUBE)
     {
-        Wire.write((uint8_t *)&usbd_c[0].duke.out, sizeof(usbd_c[0].duke.out));
-    }
-    else if (usbd_c[0].type == STEELBATTALION)
-    {
-        Wire.write((uint8_t *)&usbd_c[0].sb.out, sizeof(usbd_c[0].sb.out));
+        Wire.write((uint8_t *)&usbd_c[0].gamecube.out, sizeof(usbd_c[0].gamecube.out));
     }
     else
     {

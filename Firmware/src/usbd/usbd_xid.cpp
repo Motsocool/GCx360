@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "usbd_xid.h"
+#include "gamecube.h"
 
 //#define ENABLE_USBD_XID_DEBUG
 #ifdef ENABLE_USBD_XID_DEBUG
@@ -30,9 +31,16 @@ int XID_::getInterface(uint8_t *interfaceCount)
 
 int XID_::getDescriptor(USBSetup &setup)
 {
-    //Device descriptor for duke, seems to work fine for Steel Battalion. Keep constant.
-    USB_SendControl(TRANSFER_PGM, &xid_dev_descriptor, sizeof(xid_dev_descriptor));
-    return sizeof(xid_dev_descriptor);
+    if (setup.wValueH == 0x42)
+    {
+        USB_SendControl(TRANSFER_PGM, GAMECUBE_DESC_XID, sizeof(GAMECUBE_DESC_XID));
+        return sizeof(GAMECUBE_DESC_XID);
+    }
+    else
+    {
+        USB_SendControl(TRANSFER_PGM, &xid_dev_descriptor, sizeof(xid_dev_descriptor));
+        return sizeof(xid_dev_descriptor);
+    }
 }
 
 int XID_::sendReport(const void *data, int len)
@@ -87,26 +95,19 @@ bool XID_::setup(USBSetup &setup)
         if (request == 0x06 && wValue == 0x4200)
         {
             USBD_XID_DEBUG("USBD XID: SENDING XID DESCRIPTOR\n");
-            if (xid_type == DUKE)
-            {
-                USB_SendControl(TRANSFER_PGM, DUKE_DESC_XID, sizeof(DUKE_DESC_XID));
-            }
-            else if (xid_type == STEELBATTALION)
-            {
-                USB_SendControl(TRANSFER_PGM, BATTALION_DESC_XID, sizeof(BATTALION_DESC_XID));
-            }
+            USB_SendControl(TRANSFER_PGM, GAMECUBE_DESC_XID, sizeof(GAMECUBE_DESC_XID));
             return true;
         }
         if (request == 0x01 && wValue == 0x0100)
         {
             USBD_XID_DEBUG("USBD XID: SENDING XID CAPABILITIES IN\n");
-            USB_SendControl(TRANSFER_PGM, DUKE_CAPABILITIES_IN, sizeof(DUKE_CAPABILITIES_IN));
+            USB_SendControl(TRANSFER_PGM, GAMECUBE_CAPABILITIES_IN, sizeof(GAMECUBE_CAPABILITIES_IN));
             return true;
         }
         if (request == 0x01 && wValue == 0x0200)
         {
             USBD_XID_DEBUG("USBD XID: SENDING XID CAPABILITIES OUT\n");
-            USB_SendControl(TRANSFER_PGM, DUKE_CAPABILITIES_OUT, sizeof(DUKE_CAPABILITIES_OUT));
+            USB_SendControl(TRANSFER_PGM, GAMECUBE_CAPABILITIES_OUT, sizeof(GAMECUBE_CAPABILITIES_OUT));
             return true;
         }
     }
@@ -134,9 +135,6 @@ bool XID_::setup(USBSetup &setup)
     }
 
     USBD_XID_DEBUG("USBD XID: STALL\n");
-    Serial1.println(requestType, HEX);
-    Serial1.println(request, HEX);
-    Serial1.println(wValue, HEX);
     return false;
 }
 
@@ -162,13 +160,18 @@ xid_type_t XID_::getType(void)
     return xid_type;
 }
 
+void XID_::setRumble(uint8_t rumble)
+{
+    xid_out_data[0] = rumble;
+}
+
 XID_::XID_(void) : PluggableUSBModule(2, 1, epType)
 {
     epType[0] = EP_TYPE_INTERRUPT_IN;
     epType[1] = EP_TYPE_INTERRUPT_OUT;
     memset(xid_out_data, 0x00, sizeof(xid_out_data));
     memset(xid_in_data, 0x00, sizeof(xid_in_data));
-    xid_type = DUKE;
+    xid_type = GAMECUBE;
     PluggableUSB().plug(this);
 }
 

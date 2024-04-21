@@ -24,12 +24,9 @@ void setup()
 
     for (uint8_t i = 0; i < MAX_GAMEPADS; i++)
     {
-        usbd_c[i].type = DUKE;
-        usbd_c[i].duke.in.bLength = sizeof(usbd_duke_in_t);
-        usbd_c[i].duke.out.bLength = sizeof(usbd_duke_out_t);
-
-        usbd_c[i].sb.in.bLength = sizeof(usbd_sbattalion_in_t);
-        usbd_c[i].sb.out.bLength = sizeof(usbd_sbattalion_out_t);
+        usbd_c[i].type = GAMECUBE;
+        usbd_c[i].gamecube.in.bLength = sizeof(usbd_gamecube_in_t);
+        usbd_c[i].gamecube.out.bLength = sizeof(usbd_gamecube_out_t);
     }
 
     //00 = Player 1 (MASTER)
@@ -75,7 +72,7 @@ void loop()
         slave_task();
     }
 
-    //Handle OG Xbox side (OG Xbox)
+    //Handle GameCube side
     if (usbd_xid.getType() != usbd_c[0].type)
     {
         usbd_xid.setType(usbd_c[0].type);
@@ -84,19 +81,12 @@ void loop()
     static uint32_t poll_timer = 0;
     if (millis() - poll_timer > 4)
     {
-        if (usbd_xid.getType() == DUKE)
+        if (usbd_xid.getType() == GAMECUBE)
         {
             UDCON &= ~(1 << DETACH);
             RXLED1;
-            usbd_xid.sendReport(&usbd_c[0].duke.in, sizeof(usbd_duke_in_t));
-            usbd_xid.getReport(&usbd_c[0].duke.out, sizeof(usbd_duke_out_t));
-        }
-        else if (usbd_xid.getType() == STEELBATTALION)
-        {
-            UDCON &= ~(1 << DETACH);
-            RXLED1;
-            usbd_xid.sendReport(&usbd_c[0].sb.in, sizeof(usbd_sbattalion_in_t));
-            usbd_xid.getReport(&usbd_c[0].sb.out, sizeof(usbd_sbattalion_out_t));
+            usbd_xid.sendReport(&usbd_c[0].gamecube.in, sizeof(usbd_gamecube_in_t));
+            usbd_xid.getReport(&usbd_c[0].gamecube.out, sizeof(usbd_gamecube_out_t));
         }
         else if (usbd_xid.getType() == DISCONNECTED)
         {

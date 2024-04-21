@@ -5,7 +5,6 @@
 #define _MAIN_H_
 
 #include "usbd/usbd_xid.h"
-#include "usbh/usbh_xinput.h"
 
 #ifndef MAX_GAMEPADS
 #define MAX_GAMEPADS 4
@@ -16,15 +15,17 @@
 #define PLAYER_ID1_PIN 19
 #define PLAYER_ID2_PIN 20
 
-#ifndef SB_DEFAULT_SENSITIVITY
-#define SB_DEFAULT_SENSITIVITY 400
-#endif
+// Pin assignments for GameCube controller communication
+#define SHIELD_PIN_L 4
+#define SHIELD_PIN_R 26
+#define BOOTSEL_PIN 11
+#define GC_DATA_PIN 7
+#define GC_3V3_PIN 6
 
 typedef struct
 {
    xid_type_t type;
-   usbd_duke_t duke;
-   usbd_steelbattalion_t sb;
+   usbd_gamecube_t gamecube;
 } usbd_controller_t;
 
 void master_init();
@@ -32,4 +33,4 @@ void master_task();
 void slave_init();
 void slave_task();
 
-#endif 
+#endif
