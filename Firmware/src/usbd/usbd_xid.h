@@ -27,7 +27,7 @@ typedef enum {
 } xid_type_t;
 
 // Constants and definitions from gamecube.h
-#define GC_DATA_PIN 7
+#define GC_DATA_PIN PIN_A0
 #define GC_DELAY_US 100 // Adjust the delay based on USBRetro project's values
 
 #define GC_KEY_NOT_FOUND 0x00

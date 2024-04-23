@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <Arduino.h>
+
 #include "main.h"
 #include "usbd/usbd_xid.h"
 #include "usbh/usbh_xinput.h"
