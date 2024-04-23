@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "usbd_xid.h"
-#include "gamecube.h"
 
 //#define ENABLE_USBD_XID_DEBUG
 #ifdef ENABLE_USBD_XID_DEBUG
@@ -38,8 +37,7 @@ int XID_::getDescriptor(USBSetup &setup)
     }
     else
     {
-        USB_SendControl(TRANSFER_PGM, &xid_dev_descriptor, sizeof(xid_dev_descriptor));
-        return sizeof(xid_dev_descriptor);
+        return 0;
     }
 }
 
@@ -160,9 +158,44 @@ xid_type_t XID_::getType(void)
     return xid_type;
 }
 
-void XID_::setRumble(uint8_t rumble)
+void XID_::sendGCData(uint8_t data)
 {
-    xid_out_data[0] = rumble;
+    // Send start bit
+    digitalWrite(GC_DATA_PIN, LOW);
+    delayMicroseconds(GC_DELAY_US);
+
+    // Send data bits
+    for (int i = 0; i < 8; i++)
+    {
+        digitalWrite(GC_DATA_PIN, (data & (1 << i)) ? HIGH : LOW);
+        delayMicroseconds(GC_DELAY_US);
+    }
+
+    // Send stop bit
+    digitalWrite(GC_DATA_PIN, HIGH);
+    delayMicroseconds(GC_DELAY_US);
+}
+
+uint8_t XID_::receiveGCData()
+{
+    uint8_t data = 0;
+
+    // Wait for start bit
+    while (digitalRead(GC_DATA_PIN) == HIGH);
+    delayMicroseconds(GC_DELAY_US / 2);
+
+    // Read data bits
+    for (int i = 0; i < 8; i++)
+    {
+        delayMicroseconds(GC_DELAY_US);
+        data |= digitalRead(GC_DATA_PIN) << i;
+    }
+
+    // Wait for stop bit
+    while (digitalRead(GC_DATA_PIN) == LOW);
+    delayMicroseconds(GC_DELAY_US);
+
+    return data;
 }
 
 XID_::XID_(void) : PluggableUSBModule(2, 1, epType)
@@ -177,5 +210,7 @@ XID_::XID_(void) : PluggableUSBModule(2, 1, epType)
 
 int XID_::begin(void)
 {
+    pinMode(GC_DATA_PIN, OUTPUT);
+    digitalWrite(GC_DATA_PIN, HIGH);
     return 0;
 }

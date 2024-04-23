@@ -1,10 +1,8 @@
 // Copyright 2021, Ryan Wendland, ogx360
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#ifndef _XID_H
-#define _XID_H
-
-#define _USING_XID
+#ifndef _XID_H_
+#define _XID_H_
 
 #include <Arduino.h>
 #include <PluggableUSB.h>
@@ -29,6 +27,9 @@ typedef enum {
 } xid_type_t;
 
 // Constants and definitions from gamecube.h
+#define GC_DATA_PIN 7
+#define GC_DELAY_US 100 // Adjust the delay based on USBRetro project's values
+
 #define GC_KEY_NOT_FOUND 0x00
 #define BUTTON_MODE_0 0x00
 #define BUTTON_MODE_1 0x01
@@ -64,6 +65,8 @@ public:
     int getReport(void *data, int len);
     void setType(xid_type_t type);
     xid_type_t getType(void);
+    void sendGCData(uint8_t data);
+    uint8_t receiveGCData();
 
 protected:
     int getInterface(uint8_t *interfaceCount);
@@ -80,7 +83,7 @@ private:
 
 XID_ &XID();
 
-#endif // _XID_H
+#endif // _XID_H_
 
 static const DeviceDescriptor xid_dev_descriptor PROGMEM =
     D_DEVICE(0x00, 0x00, 0x00, USB_EP_SIZE, USB_VID, USB_PID, 0x0121, 0, 0, 0, 1);
@@ -111,10 +114,3 @@ static const uint8_t GAMECUBE_CAPABILITIES_OUT[] PROGMEM = {
     0x01,
     0xFF
 };
-
-typedef struct __attribute__((packed))
-{
-    InterfaceDescriptor interface;
-    EndpointDescriptor in;
-    EndpointDescriptor out;
-} XIDDescriptor;

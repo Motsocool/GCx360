@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <Arduino.h>
-
 #include "main.h"
 #include "usbd/usbd_xid.h"
 #include "usbh/usbh_xinput.h"
@@ -43,6 +42,8 @@ void setup()
     {
         slave_init();
     }
+
+    usbd_xid.begin();
 }
 
 void loop()
@@ -72,7 +73,7 @@ void loop()
         slave_task();
     }
 
-    //Handle GameCube side
+    //Handle GameCube communication
     if (usbd_xid.getType() != usbd_c[0].type)
     {
         usbd_xid.setType(usbd_c[0].type);
@@ -85,8 +86,19 @@ void loop()
         {
             UDCON &= ~(1 << DETACH);
             RXLED1;
-            usbd_xid.sendReport(&usbd_c[0].gamecube.in, sizeof(usbd_gamecube_in_t));
-            usbd_xid.getReport(&usbd_c[0].gamecube.out, sizeof(usbd_gamecube_out_t));
+
+            // Wait for GameCube console to poll controller
+            while (usbd_xid.receiveGCData() != 0x00);
+
+            // Send GameCube controller button report
+            usbd_gamecube_in_t gc_report = usbd_c[0].gamecube.in;
+            for (int i = 0; i < sizeof(usbd_gamecube_in_t); i++)
+            {
+                usbd_xid.sendGCData(((uint8_t*)&gc_report)[i]);
+            }
+
+            // Receive rumble data from GameCube console
+            usbd_c[0].gamecube.out.rumble = usbd_xid.receiveGCData();
         }
         else if (usbd_xid.getType() == DISCONNECTED)
         {
