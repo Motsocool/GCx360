@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 gerbers: .kitspace
 bom: .kitspace/bom.csv
 color: blue
+=======
+gerbers: .kitspace
+bom: .kitspace/bom.csv
+color: blue
+>>>>>>> 026bdfb91d27390fb435aa2361c032a6225952bb
 site: https://github.com/Ryzee119/ogx360
