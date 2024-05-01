@@ -1,87 +1,107 @@
-<<<<<<< HEAD
-// Copyright 2021, Ryan Wendland
-=======
 // Copyright 2021, Ryan Wendland, ogx360
->>>>>>> 026bdfb91d27390fb435aa2361c032a6225952bb
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#ifndef _MAIN_H_
-#define _MAIN_H_
+#ifndef _XID_H_
+#define _XID_H_
 
-<<<<<<< HEAD
-#include "usbd/usbd_xid.h"  // Includes for USB device interface
-#include "usbh/usbh_xinput.h"  // Includes for USB host interface
+#include <Arduino.h>
+#include <PluggableUSB.h>
+#include "gamecube.h"
 
-// Define the maximum number of gamepads supported
-=======
-#include "usbd/usbd_xid.h"
+#define XID_INTERFACECLASS 88
+#define XID_INTERFACESUBCLASS 66
 
->>>>>>> 026bdfb91d27390fb435aa2361c032a6225952bb
-#ifndef MAX_GAMEPADS
-#define MAX_GAMEPADS 4
+#ifndef _USING_HID
+#define HID_GET_REPORT 0x01
+#define HID_SET_REPORT 0x09
+#define HID_REPORT_TYPE_INPUT 1
+#define HID_REPORT_TYPE_OUTPUT 2
 #endif
 
-<<<<<<< HEAD
-// Define pins used for USB reset and LED signaling
-#define USB_HOST_RESET_PIN 9
-#define ARDUINO_LED_PIN 17
+#define XID_EP_IN (pluggedEndpoint)
+#define XID_EP_OUT (pluggedEndpoint + 1)
 
-// Define pins used to determine the player's ID
-#define PLAYER_ID1_PIN 19
-#define PLAYER_ID2_PIN 20
+// Definitions specific to GameCube controllers
+typedef enum {
+    DISCONNECTED = 0,
+    GAMECUBE
+} xid_type_t;
 
-// Define pins specific to GameCube controller communication
-#define GAMECUBE_DATA_PIN 7
-#define GAMECUBE_POWER_PIN 8
+/**
+ * @brief Represents the state of a GameCube controller, encapsulating all button
+ * and analog controls in a structured manner.
+ */
+struct GameCubeControllerState {
+    uint8_t buttonState[2]; ///< Stores state of buttons in two bytes
+    uint8_t joystickX;      ///< Joystick X-axis value (0-255)
+    uint8_t joystickY;      ///< Joystick Y-axis value (0-255)
+    uint8_t cStickX;        ///< C-Stick X-axis value (0-255)
+    uint8_t cStickY;        ///< C-Stick Y-axis value (0-255)
+    uint8_t triggerL;       ///< Left trigger analog value (0-255)
+    uint8_t triggerR;       ///< Right trigger analog value (0-255)
+};
 
-// Default sensitivity setting for controllers where applicable
-#ifndef SB_DEFAULT_SENSITIVITY
-#define SB_DEFAULT_SENSITIVITY 400
-#endif
+class XID_ : public PluggableUSBModule {
+public:
+    XID_(void);
+    int begin(void);
+    int sendReport(const void *data, int len);
+    int getReport(void *data, int len);
+    void setType(xid_type_t type);
+    xid_type_t getType(void);
+    void sendGCData(uint8_t data);
+    uint8_t receiveGCData();
 
-// Structure to manage different types of controllers
-typedef struct {
-   xid_type_t type;                  // Type of controller (Duke, Steel Battalion, GameCube)
-   usbd_duke_t duke;                 // Specifics for Duke controller
-   usbd_steelbattalion_t sb;         // Specifics for Steel Battalion controller
-   usbd_gamecube_t gamecube;         // Specifics for GameCube controller
-} usbd_controller_t;
+protected:
+    /**
+     * @brief Initialize the USB interface for a GameCube controller.
+     * Sets up endpoints and configures the USB interface with appropriate class and subclass information.
+     *
+     * @param interfaceCount Pointer to store the updated count of USB interfaces.
+     * @return int Status of the USB interface setup operation.
+     */
+    int getInterface(uint8_t *interfaceCount);
+    int getDescriptor(USBSetup &setup);
+    bool setup(USBSetup &setup);
 
-// Function declarations for system initialization and regular tasks
-void master_init();    // Initialize the system in master mode
-void master_task();    // Tasks to perform in master mode
-void slave_init();     // Initialize the system in slave mode
-void slave_task();     // Tasks to perform in slave mode
+private:
+    xid_type_t xid_type;
+    uint8_t epType[2];
+    uint8_t xid_in_data[32];
+    uint8_t xid_out_data[32];
+    uint32_t xid_out_expired;
+};
 
-// GameCube specific function declarations
-void gamecube_init();              // Initialize the GameCube controller
-void gamecube_send_command(uint8_t command);  // Send a command to the GameCube controller
-uint8_t gamecube_read_data();      // Read data from the GameCube controller
+XID_ &XID();
 
-#endif // _MAIN_H_
-=======
-#define USB_HOST_RESET_PIN 9
-#define ARDUINO_LED_PIN 17
-#define PLAYER_ID1_PIN 19
-#define PLAYER_ID2_PIN 20
+#endif // _XID_H_
 
-// Pin assignments for GameCube controller communication
-#define SHIELD_PIN_L 4
-#define SHIELD_PIN_R 26
-#define BOOTSEL_PIN 11
-#define GC_DATA_PIN 7
-#define GC_3V3_PIN 6
+static const DeviceDescriptor xid_dev_descriptor PROGMEM =
+    D_DEVICE(0x00, 0x00, 0x00, USB_EP_SIZE, USB_VID, USB_PID, 0x0121, 0, 0, 0, 1);
 
-typedef struct
-{
-   xid_type_t type;
-   usbd_gamecube_t gamecube;
-} usbd_controller_t;
+static const uint8_t GAMECUBE_DESC_XID[] PROGMEM = {
+    0x10,
+    0x42,
+    0x00, 0x01,
+    0x05,
+    0x03,
+    0x00, 0x00,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
 
-void master_init();
-void master_task();
-void slave_init();
-void slave_task();
+static const uint8_t GAMECUBE_CAPABILITIES_IN[] PROGMEM = {
+    0x00,
+    0x0E,
+    0xFF,
+    0x00,
+    0xFF,
+    0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF
+};
 
-#endif
->>>>>>> 026bdfb91d27390fb435aa2361c032a6225952bb
+static const uint8_t GAMECUBE_CAPABILITIES_OUT[] PROGMEM = {
+    0x00,
+    0x01,
+    0xFF
+};
